@@ -3,6 +3,7 @@ import random
 import sys
 import time
 import pygame as pg
+import math
 
 
 WIDTH = 1100  # ゲームウィンドウの幅
@@ -56,6 +57,7 @@ class Bird:
         self.img = __class__.imgs[(+5, 0)]
         self.rct: pg.Rect = self.img.get_rect()
         self.rct.center = xy
+        self.dire = (+5, 0)  # 初期の向きは右
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -69,45 +71,49 @@ class Bird:
     def update(self, key_lst: list[bool], screen: pg.Surface):
         """
         押下キーに応じてこうかとんを移動させる
-        引数1 key_lst：押下キーの真理値リスト
-        引数2 screen：画面Surface
         """
         sum_mv = [0, 0]
-        for k, mv in __class__.delta.items():
+
+        for k, mv in self.delta.items():
             if key_lst[k]:
                 sum_mv[0] += mv[0]
                 sum_mv[1] += mv[1]
+
+        if sum_mv != [0, 0]:
+            self.dire = tuple(sum_mv)
+            self.img = __class__.imgs[self.dire]
+
         self.rct.move_ip(sum_mv)
+
         if check_bound(self.rct) != (True, True):
             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
-        if not (sum_mv[0] == 0 and sum_mv[1] == 0):
-            self.img = __class__.imgs[tuple(sum_mv)]
-        screen.blit(self.img, self.rct)
+
+        screen.blit(self.img, self.rct)    
 
 
 class Beam:
     """
-    こうかとんが放つビームに関するクラス
+    ビームに関するクラス
     """
-    def __init__(self, bird:"Bird"):
-        """
-        ビーム画像Surfaceを生成する
-        引数 bird：ビームを放つこうかとん（Birdインスタンス）
-        """
-        self.img = pg.image.load(f"fig/beam.png")
-        self.rct = self.img.get_rect()
-        self.rct.centery = bird.rct.centery #こうかとんの中心縦座標
-        self.rct.left = bird.rct.right
-        self.vx, self.vy = +5, 0
+    def __init__(self, bird):
+        vx, vy = bird.dire
 
-    def update(self, screen: pg.Surface):
-        """
-        ビームを速度ベクトルself.vx, self.vyに基づき移動させる
-        引数 screen：画面Surface
-        """
-        if check_bound(self.rct) == (True, True):
-            self.rct.move_ip(self.vx, self.vy)
-            screen.blit(self.img, self.rct)    
+        # ビーム画像を向きに応じて回転
+        angle = math.degrees(math.atan2(-vy, vx))
+        img = pg.image.load("fig/beam.png")
+        self.img = pg.transform.rotozoom(img, angle, 1.0)
+
+        # こうかとんの向きに応じてビームの初期位置を設定
+        x = bird.rct.centerx + bird.rct.width * vx / 5
+        y = bird.rct.centery + bird.rct.height * vy / 5
+        self.rct = self.img.get_rect(center=(x, y))
+
+        self.vx = vx
+        self.vy = vy
+
+    def update(self, screen):
+        self.rct.move_ip(self.vx, self.vy)
+        screen.blit(self.img, self.rct)    
 
 
 class Bomb:

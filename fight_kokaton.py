@@ -140,6 +140,7 @@ class Bomb:
         self.rct.move_ip(self.vx, self.vy)
         screen.blit(self.img, self.rct)
 
+
 class Score:
     """
     スコア表示に関するクラス
@@ -169,6 +170,28 @@ class Score:
         )
         screen.blit(self.img, self.rct)
 
+
+class Explosion:
+    """
+    爆発エフェクトに関するクラス
+    """
+    def __init__(self, bomb):
+        img = pg.image.load("fig/explosion.gif")
+        self.imgs = [
+            img,
+            pg.transform.flip(img, True, True)
+        ]
+        self.img = self.imgs[0]
+        self.rct = self.img.get_rect(center=bomb.rct.center)
+        self.life = 10
+
+    def update(self, screen):
+        self.life -= 1
+        if self.life > 0:
+            self.img = self.imgs[self.life % 2]
+            screen.blit(self.img, self.rct)
+
+
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
@@ -177,6 +200,7 @@ def main():
     score = Score()  # スコアを初期化
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
     beams = []
+    explosions = []
     #beam = None  # ゲーム初期化時にはビームは存在しない
     clock = pg.time.Clock()
     tmr = 0
@@ -212,6 +236,7 @@ def main():
 
                 if beam.rct.colliderect(bomb.rct):
                     score.score += 1
+                    explosions.append(Explosion(bomb))
                     beams[i] = None
                     bombs[j] = None
                     break
@@ -233,6 +258,16 @@ def main():
         ]
         for bomb in bombs:     
             bomb.update(screen)
+
+         # 爆発エフェクトを表示
+        for explosion in explosions:
+            explosion.update(screen)
+
+        # 表示時間が終わった爆発を削除
+        explosions = [
+            explosion for explosion in explosions
+            if explosion.life > 0
+        ]
         score.update(screen)
         pg.display.update()
         tmr += 1

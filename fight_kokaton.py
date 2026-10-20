@@ -182,6 +182,10 @@ class Explosion:
     爆発エフェクトに関するクラス
     """
     def __init__(self, bomb):
+        """
+        こうかとん画像Surfaceを生成する
+        引数 xy：こうかとん画像の初期位置座標タプル
+        """
         img = pg.image.load("fig/explosion.gif")
         self.imgs = [
             img,
@@ -192,6 +196,11 @@ class Explosion:
         self.life = 10
 
     def update(self, screen):
+        """
+        押下キーに応じてこうかとんを移動・描画する
+        引数 key_lst：押下キーの真理値リスト
+        引数 screen：画面Surface
+        """
         self.life -= 1
         if self.life > 0:
             self.img = self.imgs[self.life % 2]

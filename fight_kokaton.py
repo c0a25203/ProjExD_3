@@ -140,12 +140,41 @@ class Bomb:
         self.rct.move_ip(self.vx, self.vy)
         screen.blit(self.img, self.rct)
 
+class Score:
+    """
+    スコア表示に関するクラス
+    """
+
+    def __init__(self):
+        """
+        スコア表示用のSurfaceを生成する
+        フォント，文字色，初期スコア，表示位置を設定する
+        """
+        self.fonto = pg.font.Font(None, 50)
+        self.color = (0, 0, 255)
+        self.score = 0
+        self.img = self.fonto.render(
+            f"Score: {self.score}", 0, self.color
+        )
+        self.rct = self.img.get_rect()
+        self.rct.center = (100, HEIGHT - 50)
+
+    def update(self, screen: pg.Surface):
+        """
+        現在のスコアを表示する文字列Surfaceを生成し，画面に転送する
+        引数 screen：画面Surface
+        """
+        self.img = self.fonto.render(
+            f"Score: {self.score}", 0, self.color
+        )
+        screen.blit(self.img, self.rct)
 
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
+    score = Score()  # スコアを初期化
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
     beam = None  # ゲーム初期化時にはビームは存在しない
     clock = pg.time.Clock()
@@ -160,6 +189,7 @@ def main():
         screen.blit(bg_img, [0, 0])
 
         for bomb in bombs:
+            # こうかとんと爆弾が衝突した場合
             if bird.rct.colliderect(bomb.rct):
                 fonto = pg.font.Font(None, 80)
                 txt = fonto.render("Game Over", True, (255, 0, 0))
@@ -169,8 +199,9 @@ def main():
                 return
 
             if beam is not None and beam.rct.colliderect(bomb.rct):
+                score.score += 1
                 beam = None
-                bombs[bombs.index(bomb)] = None
+                bombs.remove(bomb)
                 break
 
         bombs = [bomb for bomb in bombs if bomb is not None]
@@ -181,6 +212,7 @@ def main():
             beam.update(screen)  
         for bomb in bombs:     
             bomb.update(screen)
+        score.update(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
